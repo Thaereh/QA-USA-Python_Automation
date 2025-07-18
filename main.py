@@ -9,6 +9,12 @@ class TestUrbanRoutes:
         else:
             print ("failed !!")
 
+ def retrieve_phone_code(driver):
+     if helpers.retrieve_phone_code(driver):
+            print ("Connected to the Urban Routes server")
+     else:
+            print ("Cannot connect to Urban Routes. Check the server is on and still running")
+
     def helpers.is_url_reachable(url):
     if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
             print ( "Connected to the Urban Routes server")
