@@ -3,32 +3,14 @@ import helpers
 
 class TestUrbanRoutes:
     @classmethod
+
     def setup_class (cls):
-        if setup_class (cls):
-            print("passed !!")
-        else:
-            print ("failed !!")
-
- def retrieve_phone_code(driver):
-     if helpers.retrieve_phone_code(driver):
-            print ("Connected to the Urban Routes server")
-     else:
-            print ("Cannot connect to Urban Routes. Check the server is on and still running")
-
-    def helpers.is_url_reachable(url):
-    if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
-            print ( "Connected to the Urban Routes server")
+        if helpers.is_url_reachable (data.URBAN_ROUTES_URL):
+            print("Connected to the Urban Routes server")
         else:
             print("Cannot connect to Urban Routes. Check the server is on and still running")
 
-    def test_order_2_ice_creams(self):
-        number_of_ice_creams=2
-        for i in range(number_of_ice_creams):
-            # Add in S8
-            print("function created for order 2 ice creams")
-            pass
-
-    def helpers_test_set_route (self):
+    def test_set_route (self):
         print("function created for set route")
         pass
     def  test_select_plan (self):
@@ -46,8 +28,11 @@ class TestUrbanRoutes:
     def test_order_blanket_and_handkerchiefs(self):
         print("function created for set route")
         pass
-    def  test_order_2_ice_creams (self):
-        print("function created for set route")
+    def test_order_2_ice_creams (self):
+        number_of_ice_creams = 2
+        for i in range(number_of_ice_creams):
+            print("function created for order 2 ice creams")
+            # Add in S8
         pass
     def test_car_search_model_appears (self):
         print("function created for set route")
