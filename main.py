@@ -1,3 +1,5 @@
+from selenium.webdriver.chrome import webdriver
+
 import data
 import helpers
 
@@ -5,7 +7,12 @@ class TestUrbanRoutes:
     @classmethod
 
     def setup_class (cls):
-        if helpers.is_url_reachable (data.URBAN_ROUTES_URL):
+        from selenium.webdriver import DesiredCapabilities
+        capabilities = DesiredCapabilities.CHROME
+        capabilities["goog:loggingPrefs"] = {'performance': 'ALL'}
+        cls.driver = webdriver.Chrome()
+
+        if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
             print("Connected to the Urban Routes server")
         else:
             print("Cannot connect to Urban Routes. Check the server is on and still running")
@@ -37,3 +44,7 @@ class TestUrbanRoutes:
     def test_car_search_model_appears (self):
         print("function created for set route")
         pass
+
+    @classmethod
+    def teardown_class(cls):
+        cls.driver.quit()
