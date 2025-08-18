@@ -1,11 +1,18 @@
-from selenium.webdriver.chrome import webdriver
-
+from selenium import webdriver
+import pytest
+from pages import UrbanRoutesPage
+import
 import data
 import helpers
+from helpers import retrieve_phone_code
 
 class TestUrbanRoutes:
     @classmethod
+    def __init__(self, driver):
+        self.driver = driver
+        self.urban_routes_page = UrbanRoutesPage(driver)
 
+    @classmethod
     def setup_class (cls):
         from selenium.webdriver import DesiredCapabilities
         capabilities = DesiredCapabilities.CHROME
@@ -18,6 +25,7 @@ class TestUrbanRoutes:
             print("Cannot connect to Urban Routes. Check the server is on and still running")
 
     def test_set_route (self):
+        self.driver.get(data.URBAN_ROUTES_URL)
         print("function created for set route")
         pass
     def  test_select_plan (self):
