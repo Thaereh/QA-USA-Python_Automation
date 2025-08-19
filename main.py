@@ -1,7 +1,6 @@
 from selenium import webdriver
 import pytest
 from pages import UrbanRoutesPage
-import
 import data
 import helpers
 from helpers import retrieve_phone_code
