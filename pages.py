@@ -2,13 +2,10 @@ import time
 from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
-
 from data import CARD_NUMBER, ADDRESS_FROM
 
 
 class UrbanRoutesPage:
-
-
     FROM_FIELD= (By.ID, 'from')
     TO_FIELD = (By.ID, 'to')
     CUSTOM_OPTION = ( By.XPATH, "//div[text()='Custom'}")
@@ -44,6 +41,14 @@ class UrbanRoutesPage:
     def click_call_taxi_button(self):
         self.driver.find_element(*self.CALL_TAXI_BUTTON).click()
 
+    def get_from_address(self):
+            # Return the value from the "From" field
+            return self.driver.find_element(*self.FROM_FIELD).get_attribute('value')
+
+    def get_to_address(self):
+            # Return the value from the "To" field
+            return self.driver.find_element(*self.TO_FIELD).get_attribute('value')
+
     def select_supportive_plan(self):
 
         active_elements = self.driver.find_elements(*self.SUPPORTIVE_PLAN_ACTIVE_LOCATOR).get_attribute("class")
@@ -70,9 +75,9 @@ class UrbanRoutesPage:
         code = retrieve_phone_code(self.driver)
         self.driver.find_element(*self.CODE_INPUT_FIELD).send_keys(code)
         self.driver.find_element(*self.CLICK_CONFIRM_BUTTON).click()
-        displayed_phone = self.driver.find_element(*self.PHONE_FIELD).text
-        assert displayed_phone == number
-
+    def get_phone_number(self):
+            # Return the value from the "From" field
+            return self.driver.find_element(*self.PHONE_FIELD).get_attribute('value')
 
     def get_payment_method(self,number,code):
         self.driver.find_element(*self.PAYMENT_METHOD).click()
@@ -82,25 +87,24 @@ class UrbanRoutesPage:
         cvv_element.send_keys(code)
         cvv_element.send_keys(Keys.TAB)
         self.driver.find_element(*self.LINK_BUTTON).click()
-        actual_value = self.driver.find_element(*self.PAYMENT_METHOD).text
-        assert actual_value == "Card"
+
+
 
 
     def comment_for_driver(self,message):
          self.driver.find_element(*self.MESSAGE_TO_DRIVER).send_keys(message)
          actual_message = self.driver.find_element(*self.MESSAGE_TO_DRIVER).get_attribute('value')
-         assert actual_message == MESSAGE_FOR_DRIVER
+
 
     def order_blanket_and_handkerchiefs(self):
         self.driver.find_element(*self.BLANKET_AND_HANDKERCHIEFS_SLIDER).click()
         is_selected = self.driver.find_element(*self.BLANKET_AND_HANDKERCHIEFS_SLIDER).get_property('checked')
-        assert is_selected == True
+
 
     def add_ice_creams(self):
         for i in range(2):
             self.driver.find_element(*self.ORDER_2_ICE_CREAMS).click()
         ice_cream_2_order=self.driver.find_element(*self.CHECK_2_ICE_CREAMS)
-        assert ice_cream_2_order=="2"
 
     def order_taxi_supportive_tariff(self, number,message):
         self.driver.find_element(*self.CALL_TAXI_BUTTON).click()
@@ -114,9 +118,11 @@ class UrbanRoutesPage:
         self.driver.find_element(*self.CODE_INPUT_FIELD).send_keys(code)
         self.driver.find_element(*self.CLICK_CONFIRM_BUTTON).click()
         displayed_phone = self.driver.find_element(*self.PHONE_FIELD).text
-        assert displayed_phone == number
+
         self.driver.find_element(*self.MESSAGE_TO_DRIVER).send_keys(message)
         self.driver.find_element(*self.CLICK_ORDER).click()
         time.sleep(60)
         modal_element=self.driver.find_element(*self.MODAL_LOCATOR)
-        assert modal_element.is_displayed()
+
+
+

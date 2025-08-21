@@ -15,26 +15,6 @@ import pytest
 
 class TestUrbanRoutes:
     @classmethod
-    def __init__(self,driver):
-        self.BLANKET_AND_HANDKERCHIEFS_SLIDER = (By.XPATH,"//span[@class='slider round']")
-        self.MESSAGE_TO_DRIVER = (By.XPATH,"//input[@placeholder='Stop at the juice bar, please']")
-        self.LINK_BUTTON = (By.XPATH,"//button[contains(text(),'Link') and @type='submit')]")
-        self.ENTER_CARD_CVV = (By.ID,"code")
-        self.ENTER_VALID_CARD_NUMBER = (By.ID,'number')
-        self.ADDING_CARD_FIELD = (By.XPATH,"//div[contains(text(),'Add card')]")
-        self.PAYMENT_METHOD = (By.XPATH, "//div[contains(text(),'Card')]")
-        self.CHECK_2_ICE_CREAMS =(By.XPATH, "//div[contains(@class, 'counter-value')]")
-        self.ORDER_2_ICE_CREAMS = (By.XPATH, "//div[contains(@class, 'counter-plus')]")
-        self.CLICK_CONFIRM_BUTTON = (By.XPATH,"//button[contains(text(),'Confirm') and @type='submit']")
-        self.CODE_INPUT_FIELD = (By.XPATH,"//input[@placeholder='xxxx']")
-        self.CLICK_NEXT_BUTTON = (By.XPATH,"//button[contains(text(),'Next') and @type='submit']")
-        self.PHONE_NUMBER_INPUT = (By.XPATH,"//input[@placeholder='+1 xxx xxx xx xx']")
-        self.PHONE_FIELD = (By.CLASS_NAME,"np-text")
-        self.driver = driver
-        self.urban_routes_page = UrbanRoutesPage(driver)
-
-
-    @classmethod
     def setup_class (cls):
         from selenium.webdriver import DesiredCapabilities
         capabilities = DesiredCapabilities.CHROME
@@ -47,9 +27,15 @@ class TestUrbanRoutes:
             print("Cannot connect to Urban Routes. Check the server is on and still running")
 
     def test_set_route (self):
+        urban_routes_page = UrbanRoutesPage(self.driver)
         self.driver.get(data.URBAN_ROUTES_URL)
-        print("function created for set route")
-        pass
+        urban_routes_page.set_from_address(data.ADDRESS_FROM)
+        urban_routes_page.set_to_address(data.ADDRESS_TO)
+        from_value = urban_routes_page.get_from_address()
+        to_value = urban_routes_page.get_to_address()
+        assert data.ADDRESS_FROM in from_value
+        assert data.ADDRESS_TO in to_value
+
     def  test_select_plan (self):
         self.driver.get(data.URBAN_ROUTES_URL)
         page=UrbanRoutesPage(self.driver)
@@ -60,21 +46,20 @@ class TestUrbanRoutes:
 
     def test_fill_phone_number (self):
         self.driver.get(data.URBAN_ROUTES_URL)
-        page = UrbanRoutesPage(self.driver)
-        page.set_from_address(data.ADDRESS_FROM)
-        page.set_to_address(data.ADDRESS_TO)
-        supportive_status = page.select_supportive_plan()
-        self.driver.find_element(*self.PHONE_FIELD).click()
-        self.driver.find_element(*self.PHONE_NUMBER_INPUT).send_keys(PHONE_NUMBER)
-        self.driver.find_element(*self.CLICK_NEXT_BUTTON).click()
+        urban_routes_page = UrbanRoutesPage(self.driver)
+        urban_routes_page.set_from_address(data.ADDRESS_FROM)
+        urban_routes_page.set_to_address(data.ADDRESS_TO)
+        urban_routes_page.click_call_taxi_button()
+        supportive_status = urban_routes_page.select_supportive_plan()
+        urban_routes_page.set_phone_number(data.PHONE_NUMBER)
         time.sleep(60)
         from helpers import retrieve_phone_code
         code = retrieve_phone_code(self.driver)
-        self.driver.find_element(*self.CODE_INPUT_FIELD).send_keys(code)
-        self.driver.find_element(*self.CLICK_CONFIRM_BUTTON).click()
-        displayed_phone = self.driver.find_element(*self.PHONE_FIELD).text
+        urban_routes_page.enter_sms_code(code)
+        urban_routes_page.click_confirm_button ()
+        displayed_phone=urban_routes_page.get_phone_number(data.PHONE_NUMBER)
         time.sleep(2)
-        assert displayed_phone == PHONE_NUMBER
+        assert displayed_phone == data.PHONE_NUMBER
 
     def test_fill_card (self):
         self.driver.get(data.URBAN_ROUTES_URL)
@@ -121,7 +106,7 @@ class TestUrbanRoutes:
 
         print("function created for order 2 ice creams")
             # Add in S8
-        pass
+
 
     def test_car_search_model_appears (self):
         self.driver.get(data.URBAN_ROUTES_URL)
