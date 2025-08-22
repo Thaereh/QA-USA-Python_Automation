@@ -45,8 +45,10 @@ class UrbanRoutesPage:
     def set_to_address(self,address):
         self.driver.find_element(*self.TO_FIELD).send_keys(data.ADDRESS_TO)
 
-    def click_call_taxi_button(self):
-        self.driver.find_element(*self.CALL_TAXI_BUTTON).click()
+    def click_call_taxi_button(self,timeout=10):
+        wait = WebDriverWait(self.driver,timeout)
+        button = wait.until(EC.element_to_be_clickable(self.CALL_TAXI_BUTTON))
+        button.click()
 
     def get_from_address(self):
             # Return the value from the "From" field
@@ -56,20 +58,23 @@ class UrbanRoutesPage:
             # Return the value from the "To" field
             return self.driver.find_element(*self.TO_FIELD).get_attribute('value')
 
-    def select_supportive_plan(self):
+    def select_supportive_plan(self,timeout:int=10):
+        wait = WebDriverWait(self.driver, timeout)
 
-        supportive_button = self.driver.find_elements(*self.SUPPORTIVE_PLAN_ACTIVE_LOCATOR)
-        class_value = supportive_button.get_attribute("class")
+        # Wait until the supportive plan card is present
+        card = wait.until(EC.presence_of_element_located(self.SUPPORTIVE_PLAN_LOCATOR))
+        class_value = card.get_attribute("class")
 
         if "active" in class_value:
             print("Supportive Plan is already selected")
             pass
         else:
-            supportive_button.click()
+            card = wait.until(EC.element_to_be_clickable(self.SUPPORTIVE_PLAN_LOCATOR))
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", card)
+            card.click()
 
-        selected_button = self.driver.find_element(*self.SUPPORTIVE_PLAN_LOCATOR).get_attribute("class")
-        class_value = selected_button.get_property("className")
-        return class_value
+    def get_current_selected_plan(self):
+        return self.driver.find_element(*self.SUPPORTIVE_PLAN_ACTIVE_LOCATOR).text
 
     def get_supportive_plan_status(self):
         return self.driver.find_element(*self.SUPPORTIVE_PLAN_LOCATOR).get_attribute("class")
