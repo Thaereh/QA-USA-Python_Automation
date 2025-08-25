@@ -1,20 +1,21 @@
-import pytest
+
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
 import helpers
-from helpers import retrieve_phone_code
 from pages import UrbanRoutesPage
 import data
 
 class TestUrbanRoutes:
+
     @classmethod
     def setup_class (cls):
         from selenium.webdriver import DesiredCapabilities
         capabilities = DesiredCapabilities.CHROME
         capabilities["goog:loggingPrefs"] = {'performance': 'ALL'}
         cls.driver = webdriver.Chrome()
+        cls.driver.implicitly_wait(5)
+        # Check the URL hasn't timed out
 
         if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
             print("Connected to the Urban Routes server")
@@ -34,43 +35,37 @@ class TestUrbanRoutes:
         assert from_value == data.ADDRESS_FROM, f"Expected FROM address '{data.ADDRESS_FROM}', but got '{from_value}'"
         assert to_value == data.ADDRESS_TO, f"Expected TO address '{data.ADDRESS_TO}', but got '{to_value}'"
 
-    def  test_select_plan (self):
+    def test_select_plan (self):
         #Navigate to app
         self.driver.get(data.URBAN_ROUTES_URL)
         urban_routes_page=UrbanRoutesPage(self.driver)
         #actions
-        status = urban_routes_page.select_supportive_plan()
+        urban_routes_page.set_from_address(data.ADDRESS_FROM)
         urban_routes_page.set_to_address(data.ADDRESS_TO)
-
+        urban_routes_page.click_call_taxi_button()
+        status = urban_routes_page.select_supportive_plan()
         #assertion
-        supportive_status=urban_routes_page.get_supportive_plan_status()
-        assert "active" in supportive_status,f"Expected 'active' in status, got '{status}'"
-
+        assert urban_routes_page.get_supportive_plan_status() is True, "Supportive plan did not become active"
 
     def test_fill_phone_number (self):
-        #Navigate
-       self.driver.get(data.URBAN_ROUTES_URL)
-       urban_routes_page = UrbanRoutesPage(self.driver)
-        # actions
-       urban_routes_page.set_from_address(data.ADDRESS_FROM)
-       urban_routes_page.set_to_address(data.ADDRESS_TO)
-       urban_routes_page.click_call_taxi_button()
-       urban_routes_page.select_supportive_plan()
-       urban_routes_page.set_phone_number(data.PHONE_NUMBER)
-        #retrieve and enter SMS code
-       code = retrieve_phone_code(data.PHONE_NUMBER)
-       urban_routes_page.enter_sms_code(code)
-       urban_routes_page.CLICK_CONFIRM_BUTTON()
+        self.driver.get(data.URBAN_ROUTES_URL)
+        page = UrbanRoutesPage(self.driver)
 
+        # Wait for element to be clickable instead of just using time.sleep()
+        page.set_from_address(data.ADDRESS_FROM)
+        page.set_to_address(data.ADDRESS_TO)
+        page.click_call_taxi_button()
+        page.open_phone_field()
+        phone_input = page.fill_phone_number()
+        assert phone_input.get_attribute('value')==data.PHONE_NUMBER,"Phone number not typed correctly"
+        page.click_next_button()
+        code = helpers.retrieve_phone_code(self.driver)  # <-- required by the task
+        page.enter_sms_code(code)
+        page.click_confirm_button()  # ensure this uses CLICK_CONFIRM_BUTTON (not NEXT)
 
-       displayed_phone = WebDriverWait(self.driver, 10).until(
-            EC.text_to_be_present_in_element(
-                urban_routes_page.PHONE_FIELD,  # locator tuple
-                data.PHONE_NUMBER
-            )
-        )
-       assert displayed_phone == data.PHONE_NUMBER, \
-            f"Expected phone number '{data.PHONE_NUMBER}', but got '{displayed_phone}'"
+        # Verify (don’t rely on exact masking; check last 4 digits)
+        shown = page.get_phone_number()
+        assert shown[-4:] == data.PHONE_NUMBER[-4:], f"Expected last 4 '{data.PHONE_NUMBER[-4:]}' in '{shown}'"
 
     def test_fill_card (self):
         self.driver.get(data.URBAN_ROUTES_URL)
@@ -119,7 +114,7 @@ class TestUrbanRoutes:
 
 
     def test_car_search_model_appears (self,driver):
-        driver.get(data.URBAN_ROUTES_URL)
+        self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(driver)
         wait=WebDriverWait(driver,15)
         #1Enter addresses
@@ -130,7 +125,7 @@ class TestUrbanRoutes:
         #3Select Supportive plan
         wait.until(EC.element_to_be_clickable(page.SUPPORTIVE_PLAN_LOCATOR)).click()
         #4 Enter Phone number
-        wait.until(EC.element_to_be_clickable(page.PHONE_FIELD)).click()
+        wait.until(EC.element_to_be_clickable(page.OPEN_PHONE_FIELD)).click()
         wait.until(EC.visibility_of_element_located(page.PHONE_NUMBER_INPUT)).send_keys(data.PHONE_NUMBER)
         wait.until(EC.element_to_be_clickable(page.CLICK_NEXT_BUTTON)).click()
         #5 retrieve the SMS code via helper and confirm
