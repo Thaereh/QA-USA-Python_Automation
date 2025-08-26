@@ -1,3 +1,4 @@
+import time
 
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -27,23 +28,21 @@ class TestUrbanRoutes:
         self.driver.get(data.URBAN_ROUTES_URL)
         urban_routes_page = UrbanRoutesPage(self.driver)
         #actions
-        urban_routes_page.set_from_address(data.ADDRESS_FROM)
-        urban_routes_page.set_to_address(data.ADDRESS_TO)
+        urban_routes_page.set_from_address()
+        urban_routes_page.set_to_address()
         # assertion
-        from_value = urban_routes_page.get_from_address()
-        to_value = urban_routes_page.get_to_address()
-        assert from_value == data.ADDRESS_FROM, f"Expected FROM address '{data.ADDRESS_FROM}', but got '{from_value}'"
-        assert to_value == data.ADDRESS_TO, f"Expected TO address '{data.ADDRESS_TO}', but got '{to_value}'"
+        assert urban_routes_page.get_from_address()== data.ADDRESS_FROM
+        assert urban_routes_page.get_to_address()==data.ADDRESS_TO
 
     def test_select_plan (self):
         #Navigate to app
         self.driver.get(data.URBAN_ROUTES_URL)
         urban_routes_page=UrbanRoutesPage(self.driver)
         #actions
-        urban_routes_page.set_from_address(data.ADDRESS_FROM)
-        urban_routes_page.set_to_address(data.ADDRESS_TO)
+        urban_routes_page.set_from_address()
+        urban_routes_page.set_to_address()
         urban_routes_page.click_call_taxi_button()
-        status = urban_routes_page.select_supportive_plan()
+        urban_routes_page.select_supportive_plan()
         #assertion
         assert urban_routes_page.get_supportive_plan_status() is True, "Supportive plan did not become active"
 
@@ -51,10 +50,12 @@ class TestUrbanRoutes:
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
 
-        # Wait for element to be clickable instead of just using time.sleep()
-        page.set_from_address(data.ADDRESS_FROM)
-        page.set_to_address(data.ADDRESS_TO)
+        time.sleep(2)
+        page.set_from_address()
+        page.set_to_address()
+        page.select_supportive_plan()
         page.click_call_taxi_button()
+        time.sleep(2)
         page.open_phone_field()
         phone_input = page.fill_phone_number()
         assert phone_input.get_attribute('value')==data.PHONE_NUMBER,"Phone number not typed correctly"
@@ -70,15 +71,20 @@ class TestUrbanRoutes:
     def test_fill_card (self):
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
+        page.get_from_address()
+        page.get_to_address()
+        page.click_call_taxi_button()
+        time.sleep(5)
+        page.click_payment_method_button()
         method_text = page.add_card_and_get_method('1234 5678 9100', '1111')
-        assert method_text == "Card"
+        assert "Card" in method_text
 
     def test_comment_for_driver(self):
         # Navigate
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
-        page.set_from_address(data.ADDRESS_FROM)
-        page.set_to_address(data.ADDRESS_TO)
+        page.set_from_address()
+        page.set_to_address()
         #actions
         message = "Stop at the juice bar, please"
         actual_message = page.comment_for_driver(message)
@@ -89,8 +95,8 @@ class TestUrbanRoutes:
     def test_order_blanket_and_handkerchiefs(self):
         self.driver.get(data.URBAN_ROUTES_URL)
         page = UrbanRoutesPage(self.driver)
-        page.set_from_address(data.ADDRESS_FROM)
-        page.set_to_address(data.ADDRESS_TO)
+        page.set_from_address()
+        page.set_to_address()
         is_selected = page.order_blanket_and_handkerchiefs()
         assert is_selected == True
 
@@ -99,8 +105,8 @@ class TestUrbanRoutes:
         page = UrbanRoutesPage(self.driver)
         wait = WebDriverWait(self.driver, 10)
 
-        page.set_from_address(data.ADDRESS_FROM)
-        page.set_to_address(data.ADDRESS_TO)
+        page.set_from_address()
+        page.set_to_address()
         wait.until(EC.element_to_be_clickable(page.CALL_TAXI_BUTTON)).click()
         wait.until(EC.element_to_be_clickable(page.SUPPORTIVE_PLAN_LOCATOR)).click()
 
@@ -118,8 +124,8 @@ class TestUrbanRoutes:
         page = UrbanRoutesPage(driver)
         wait=WebDriverWait(driver,15)
         #1Enter addresses
-        page.set_from_address(data.ADDRESS_FROM)
-        page.set_to_address(data.ADDRESS_TO)
+        page.set_from_address()
+        page.set_to_address()
         #2click call taxi
         wait.until(EC.element_to_be_clickable(page.CALL_TAXI_BUTTON)).click()
         #3Select Supportive plan

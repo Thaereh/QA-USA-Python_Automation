@@ -1,11 +1,10 @@
-from selenium.common import TimeoutException
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import data
-import helpers
 
 
 
@@ -24,12 +23,14 @@ class UrbanRoutesPage:
     PHONE_SMS_FIELD=(By.XPATH,"//input[@placeholder='xxxx']")
     CLICK_NEXT_BUTTON=(By.XPATH,"//button[contains(text(),'Next') and @type='submit']")
     CLICK_CONFIRM_BUTTON= (By.XPATH,"//button[contains(text(),'Confirm') and @type='submit']")
-    PAYMENT_METHOD = (By.XPATH, "//div[contains(text(),'Card')]")
+    PAYMENT_METHOD_BUTTON = (By.XPATH, "//div[contains(@class, 'payment')]")
     ADDING_CARD_FIELD =(By.XPATH,"//div[contains(text(),'Add card')]")
+    CLICK_ADD_CARD = (By.XPATH, "//div[@class='pp-plus-container']")
     CARD_INPUT = (By.CLASS_NAME,"card_input")
     ENTER_VALID_CARD_NUMBER=(By.ID,'number')
     ENTER_CARD_CVV=(By.ID,"code")
     LINK_BUTTON=(By.XPATH,"//button[contains(text(),'Link') and @type='submit']")
+    ADDED_CARD_VERIFICATION = (By.XPATH, "//label[@for='card-1']//span[@class='checkmark']")
     COMMENT_INPUT_FIELD=(By.ID,'comment')
     MESSAGE_TO_DRIVER=(By.XPATH,"//input[@placeholder='Stop at the juice bar, please']")
     ORDER_BLANKET_AND_HANDKERCHIEFS=(By.XPATH,"//div[text()='Blanket and handkerchiefs']")
@@ -44,15 +45,11 @@ class UrbanRoutesPage:
         self.wait = WebDriverWait(driver, 10)
 
     def set_from_address(self):
-        from_address= data.ADDRESS_FROM
         self.driver.find_element(*self.FROM_FIELD).send_keys(data.ADDRESS_FROM)
-        return from_address
 
-
-    def set_to_address(self,address):
-        to_address=data.ADDRESS_TO
+    def set_to_address(self):
         self.driver.find_element(*self.TO_FIELD).send_keys(data.ADDRESS_TO)
-        return to_address
+
 
     def click_call_taxi_button(self):
         wait = WebDriverWait(self.driver, 10)
@@ -61,53 +58,31 @@ class UrbanRoutesPage:
 
     def get_from_address(self):
             # Return the value from the "From" field
-        return self.driver.find_element(*self.FROM_FIELD).get_attribute('value')
+        return self.driver.find_element(*self.FROM_FIELD).get_porperty('value')
 
     def get_to_address(self):
             # Return the value from the "To" field
-        return self.driver.find_element(*self.TO_FIELD).get_attribute('value')
+        return self.driver.find_element(*self.TO_FIELD).get_property('value')
 
     def select_supportive_plan(self):
-        wait = WebDriverWait(self.driver, 5)  # fixed wait
+        supportive_button =self.driver.find_elements(*self.SUPPORTIVE_PLAN_ACTIVE_LOCATOR)
+        class_value =supportive_button.get_attribute("class")
 
-        parent = wait.until(EC.presence_of_element_located(self.SUPPORTIVE_PLAN_CARD_PARENT))
+        if "active" in class_value:
+            print("Supportive Plan is already selected")
+            pass
+        else:
+            supportive_button.click()
 
-        if "active" in (parent.get_attribute("class") or ""):
-            return  # already active, nothing to do
-
-        card = wait.until(EC.element_to_be_clickable(self.SUPPORTIVE_PLAN_LOCATOR))
-        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", card)
-        card.click()
-
-        # wait until the parent becomes active
-        wait.until(lambda d: "active" in (parent.get_attribute("class") or ""))
+        selected_button = self.driver.find_element(*self.SUPPORTIVE_PLAN_LOCATOR).get_attribute("class")
+        class_value = selected_button.get_property("className")
+        return class_value
 
     def get_current_selected_plan(self):
-        active_title_el = self.driver.find_element(*self.SUPPORTIVE_PLAN_ACTIVE_LOCATOR)
-        return active_title_el.text.strip()
+        return self.driver.find_element(*self.SUPPORTIVE_PLAN_ACTIVE_LOCATOR).get_attrobute("class")
 
     def get_supportive_plan_status(self):
-        parent = self.driver.find_element(*self.SUPPORTIVE_PLAN_CARD_PARENT)
-        return "active" in (parent.get_attribute("class") or "")
-
-    def _get_phone_input(self):
-        """
-        Find the phone input on the current page (no iframe handling).
-        Tries your exact locator first, then a simple fallback.
-        """
-        # try exact
-        try:
-            return self.wait.until(EC.visibility_of_element_located(self.PHONE_NUMBER_INPUT))
-        except TimeoutException:
-            pass
-
-        # try fallback (first visible match)
-        for el in self.driver.find_elements(*self.PHONE_INPUT_FALLBACK):
-            if el.is_displayed():
-                return el
-
-        raise TimeoutException("Phone input not found on the page.")
-
+        return self.driver.find_element(*self.SUPPORTIVE_PLAN_LOCATOR).get_attribute("class")
 
     def open_phone_field(self):
         self.wait.until(EC.element_to_be_clickable(self.OPEN_PHONE_FIELD)).click()
@@ -118,55 +93,56 @@ class UrbanRoutesPage:
         phone_input.send_keys(data.PHONE_NUMBER)
         return phone_input
 
-    def click_next_button(self) -> None:
+    def enter_sms_code(self,code):
+        sms_code_input = self.wait.until(EC.visibility_of_element_located(self.PHONE_SMS_FIELD))
+        sms_code_input.clear()
+        sms_code_input.send_keys(code)
+        return sms_code_input
+
+    def click_next_button(self)->None:
         self.wait.until(EC.element_to_be_clickable(self.CLICK_NEXT_BUTTON)).click()
 
-    def enter_sms_code(self,code):
-        if code is None:
-            code = helpers.retrieve_phone_code(self.driver)
-        sms_input = self.wait.until(EC.visibility_of_element_located(self.PHONE_SMS_FIELD))
-        sms_input.clear()
-        sms_input.send_keys(code)
 
     def click_confirm_button(self)->None:
         self.wait.until(EC.element_to_be_clickable(self.CLICK_CONFIRM_BUTTON)).click()
 
 
     def get_phone_number(self):
-        inputs = self.driver.find_elements(*self.PHONE_NUMBER_INPUT)
-        if inputs and inputs[0].is_displayed():
-            return (inputs[0].get_attribute("value") or "").strip()
-
-        # Otherwise read the text from your display element
-        try:
-            return (self.driver.find_element(*self.OPEN_PHONE_FIELD).text or "").strip()
-        except Exception:
-            # Fallback to the opener element’s text if PHONE_FIELD isn’t present
-            return (self.driver.find_element(*self.OPEN_PHONE_FIELD).text or "").strip()
-
+        self.driver.find_element(*self.PHONE_FIELD).get_attribute("value")
 
     def add_card_and_get_method(self,number:str,code:str)->str:
-        wait = WebDriverWait(self.driver, 10)
-        #Select payment method
-        wait.until(EC.element_to_be_clickable(self.PAYMENT_METHOD)).click()
+        wait = WebDriverWait(self.driver, 15)
+
+        # 1) Enter addresses
+        wait.until(EC.visibility_of_element_located(self.FROM_FIELD)).clear()
+        self.driver.find_element(*self.FROM_FIELD).send_keys(data.ADDRESS_FROM)
+
+        wait.until(EC.visibility_of_element_located(self.TO_FIELD)).clear()
+        self.driver.find_element(*self.TO_FIELD).send_keys(data.ADDRESS_TO)
+
+        # 2) Call taxi
+        wait.until(EC.element_to_be_clickable(self.CALL_TAXI_BUTTON)).click()
+
+        # Select payment method
+        wait.until(EC.element_to_be_clickable(self.PAYMENT_METHOD_BUTTON)).click()
         # Click add card
         wait.until(EC.element_to_be_clickable(self.ADDING_CARD_FIELD)).click()
         # Enter card number
         wait.until(EC.element_to_be_clickable(self.ENTER_VALID_CARD_NUMBER)).send_keys(number)
-        #Enter CVV number
+        # Enter CVV number
         cvv_element = wait.until(EC.presence_of_element_located(self.ENTER_CARD_CVV))
         cvv_element.send_keys(code)
         cvv_element.send_keys(Keys.TAB)
-        #Click Link button
+        # Click Link button
         wait.until(EC.element_to_be_clickable(self.LINK_BUTTON)).click()
         # Return the payment method text to validate
-        return wait.until(EC.element_to_be_clickable(self.PAYMENT_METHOD)).text
+        return wait.until(EC.element_to_be_clickable(self.PAYMENT_METHOD_BUTTON)).text
 
 
     def comment_for_driver(self,message):
-        # Wait until the comment field is visible and interactable
+
         comment_field = WebDriverWait(self.driver, 10).until(
-            EC.visibility_of_element_located(self.COMMENT_INPUT_FIELD)
+        EC.visibility_of_element_located(self.COMMENT_INPUT_FIELD)
         )
 
         # Clear any existing text (good practice) and enter message
@@ -176,11 +152,11 @@ class UrbanRoutesPage:
 
 
     def order_blanket_and_handkerchiefs(self):
-        slider = WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable(self.BLANKET_AND_HANDKERCHIEFS_SLIDER)
-        )
-        slider.click()
-        return slider.get_property("checked")
+       slider = WebDriverWait(self.driver, 10).until(
+         EC.element_to_be_clickable(self.BLANKET_AND_HANDKERCHIEFS_SLIDER)
+       )
+       slider.click()
+       return slider.get_property("checked")
 
     def get_ice_cream_count(self):
         el = self.wait.until(EC.visibility_of_element_located(self.CHECK_2_ICE_CREAMS))
@@ -190,7 +166,7 @@ class UrbanRoutesPage:
     def add_ice_creams(self):
         plus = self.wait.until(EC.element_to_be_clickable(self.ORDER_2_ICE_CREAMS))
         for i in range(2):
-            plus.click()
+              plus.click()
 
 
     def order_taxi_supportive_tariff(self, number,message):
@@ -204,12 +180,12 @@ class UrbanRoutesPage:
         code = retrieve_phone_code(self.driver)
         self.driver.find_element(*self.PHONE_SMS_FIELD).send_keys(code)
         self.driver.find_element(*self.CLICK_CONFIRM_BUTTON).click()
-        displayed_phone = self.driver.find_element(*self.PHONE_FIELD).text
-
         self.driver.find_element(*self.MESSAGE_TO_DRIVER).send_keys(message)
         self.driver.find_element(*self.CLICK_ORDER).click()
         time.sleep(60)
-        modal_element=self.driver.find_element(*self.MODAL_LOCATOR)
+        self.driver.find_element(*self.MODAL_LOCATOR)
+
+
 
 
 
